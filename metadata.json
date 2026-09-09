@@ -1,0 +1,6 @@
+{
+  "name": "Combination",
+  "description": "Visual composition engine for automated short-form video",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
