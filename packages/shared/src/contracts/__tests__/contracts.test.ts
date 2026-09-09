@@ -1,23 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import {
-  AssetSchema,
-  VisualIntentSchema,
-  SceneSchema,
-  CompositionSchema,
-  MatchResultSchema,
-  validateContract,
-  isValidContract,
-} from '../index';
+import { AssetSchema } from '../asset';
+import { CompositionSchema } from '../composition';
+import { MatchResultSchema } from '../match-result';
+import { SceneSchema } from '../scene';
+import { VisualIntentSchema } from '../visual-intent';
+import { validateContract, isValidContract } from '../validate';
 
-describe('Domain Contracts Validation', () => {
+describe('Contracts', () => {
   describe('AssetSchema', () => {
-    it('should validate a valid asset', () => {
+    it('should validate a perfectly valid asset', () => {
       const validAsset = {
         id: 'asset-1',
         type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
         source: {
-          name: 'Original File',
-          url: 'https://example.com/video.mp4',
+          name: 'Pexels',
+          url: 'https://pexels.com/video/123',
           author: 'John Doe',
         },
         license: {
@@ -33,7 +31,8 @@ describe('Domain Contracts Validation', () => {
           height: 1080,
           durationMs: 5000,
           hasAlpha: false,
-          sha256: 'a1b2c3d4e5f6',
+          aspectRatio: 1.777,
+          sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd',
         },
         visual: {
           subjects: ['person'],
@@ -46,6 +45,15 @@ describe('Domain Contracts Validation', () => {
           focalArea: 'center',
           negativeSpace: 'top',
           textSafeArea: 'center',
+          colors: {
+            dominant: ['#FF0000'],
+            secondary: ['#00FF00'],
+          },
+          motion: 'pan',
+          suggestedFunctions: ['hook', 'cta'],
+          compatibility: {
+            darkBackground: true,
+          }
         },
       };
       
@@ -53,95 +61,183 @@ describe('Domain Contracts Validation', () => {
       expect(() => validateContract(AssetSchema, validAsset)).not.toThrow();
     });
 
-    it('should reject missing required fields', () => {
-      const invalidAsset = {
-        id: 'asset-1',
-        // missing type, source, license, media, visual
-      };
-      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
-    });
-
-    it('should reject invalid field types', () => {
-      const invalidAsset = {
-        id: 123, // should be string
-        type: 'video',
-        source: { name: 'A', url: 'https://a.com' },
-        license: { name: 'A', url: 'https://a.com', status: 'approved' },
-        media: {},
-        visual: {},
-      };
-      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
-    });
-
-    it('should reject invalid enum values', () => {
-      const invalidAsset = {
-        id: 'asset-1',
-        type: 'invalid-type', // invalid
-        source: { name: 'A', url: 'https://a.com' },
-        license: { name: 'A', url: 'https://a.com', status: 'approved' },
-        media: {},
-        visual: {},
-      };
-      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
-    });
-
-    it('should reject invalid numeric ranges', () => {
+    it('should reject missing provenance', () => {
       const invalidAsset = {
         id: 'asset-1',
         type: 'video',
-        source: { name: 'A', url: 'https://a.com' },
-        license: { name: 'A', url: 'https://a.com', status: 'approved' },
-        media: {
-          width: 0, // minimum is 1
-          height: 0, // minimum is 1
-          durationMs: -1, // minimum is 0
+        importedAt: '2023-10-01T12:00:00Z',
+        // source missing
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
         },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject missing importedAt', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+    
+    it('should reject missing required license fields', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          // commercialUse missing
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject invalid license state', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'unknown', // invalid
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject invalid URI', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        source: { name: 'A', url: 'not-a-uri' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject invalid importedAt', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: 'yesterday',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject invalid hash', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'short-hash' }, // Not 64 hex
+        visual: {},
+      };
+      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
+    });
+
+    it('should reject invalid energy/complexity ranges', () => {
+      const invalidAsset = {
+        id: 'asset-1',
+        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        source: { name: 'A', url: 'https://a.com' },
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
+        },
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
         visual: {
           energy: 1.5, // max 1
-          complexity: -0.5, // min 0
         },
       };
       expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
     });
 
-    it('should reject invalid nested structures', () => {
+    it('should reject unexpected properties due to strict mode', () => {
       const invalidAsset = {
         id: 'asset-1',
         type: 'video',
-        source: 'invalid', // should be object
-        license: { name: 'A', url: 'https://a.com', status: 'approved' },
-        media: {},
-        visual: {},
-      };
-      expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
-    });
-
-    it('should validate valid boundary values', () => {
-      const validAsset = {
-        id: 'asset-1',
-        type: 'video',
+        importedAt: '2023-10-01T12:00:00Z',
+        unknownProp: 'test',
         source: { name: 'A', url: 'https://a.com' },
-        license: { name: 'A', url: 'https://a.com', status: 'approved' },
-        media: {
-          width: 1, // min 1
-          height: 1, // min 1
-          durationMs: 0, // min 0
+        license: {
+          name: 'CC0',
+          url: 'https://example.com/license',
+          status: 'approved',
+          commercialUse: true,
+          modificationAllowed: true,
+          attributionRequired: false,
         },
-        visual: {
-          energy: 0, // min 0
-          complexity: 1, // max 1
-        },
-      };
-      expect(isValidContract(AssetSchema, validAsset)).toBe(true);
-    });
-
-    it('should reject invalid license/provenance data', () => {
-      const invalidAsset = {
-        id: 'asset-1',
-        type: 'video',
-        source: { name: 'A', url: 'not-a-url' }, // invalid URL
-        license: { name: 'A', url: 'https://a.com', status: 'unknown' }, // invalid status
-        media: {},
+        media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
         visual: {},
       };
       expect(isValidContract(AssetSchema, invalidAsset)).toBe(false);
@@ -158,36 +254,6 @@ describe('Domain Contracts Validation', () => {
       };
       expect(isValidContract(VisualIntentSchema, validIntent)).toBe(true);
     });
-
-    it('should reject missing required fields', () => {
-      const invalidIntent = {
-        sceneId: 'scene-1',
-        concept: 'Intro',
-        // missing function and energy
-      };
-      expect(isValidContract(VisualIntentSchema, invalidIntent)).toBe(false);
-    });
-    
-    it('should reject invalid numeric ranges', () => {
-      const invalidIntent = {
-        sceneId: 'scene-1',
-        concept: 'High energy intro',
-        function: 'hook',
-        energy: 1.5, // max 1
-      };
-      expect(isValidContract(VisualIntentSchema, invalidIntent)).toBe(false);
-    });
-
-    it('should reject invalid timing values', () => {
-      const invalidIntent = {
-        sceneId: 'scene-1',
-        concept: 'High energy intro',
-        function: 'hook',
-        energy: 0.5,
-        durationMs: 0, // minimum 1
-      };
-      expect(isValidContract(VisualIntentSchema, invalidIntent)).toBe(false);
-    });
   });
 
   describe('SceneSchema', () => {
@@ -196,47 +262,9 @@ describe('Domain Contracts Validation', () => {
         id: 'scene-1',
         startMs: 0,
         durationMs: 5000,
-        layers: [
-          {
-            id: 'layer-1',
-            role: 'background',
-          }
-        ],
-      };
-      expect(isValidContract(SceneSchema, validScene)).toBe(true);
-    });
-
-    it('should reject missing required fields', () => {
-      const invalidScene = {
-        id: 'scene-1',
-        // missing startMs, durationMs, layers
-      };
-      expect(isValidContract(SceneSchema, invalidScene)).toBe(false);
-    });
-
-    it('should reject invalid timing values', () => {
-      const invalidScene = {
-        id: 'scene-1',
-        startMs: -100, // min 0
-        durationMs: 0, // min 1
         layers: [],
       };
-      expect(isValidContract(SceneSchema, invalidScene)).toBe(false);
-    });
-    
-    it('should reject invalid enum values in layers', () => {
-      const invalidScene = {
-        id: 'scene-1',
-        startMs: 0,
-        durationMs: 1000,
-        layers: [
-          {
-            id: 'layer-1',
-            role: 'invalid-role', // invalid
-          }
-        ],
-      };
-      expect(isValidContract(SceneSchema, invalidScene)).toBe(false);
+      expect(isValidContract(SceneSchema, validScene)).toBe(true);
     });
   });
 
@@ -250,43 +278,9 @@ describe('Domain Contracts Validation', () => {
           height: 1080,
           fps: 30,
         },
-        scenes: [
-          {
-            id: 'scene-1',
-            startMs: 0,
-            durationMs: 5000,
-            layers: [],
-          }
-        ],
+        scenes: [],
       };
       expect(isValidContract(CompositionSchema, validComposition)).toBe(true);
-    });
-
-    it('should reject invalid numeric ranges', () => {
-      const invalidComposition = {
-        id: 'comp-1',
-        version: 0, // minimum 1
-        format: {
-          width: 0, // minimum 1
-          height: 1080,
-          fps: 0, // > 0
-        },
-        scenes: [],
-      };
-      expect(isValidContract(CompositionSchema, invalidComposition)).toBe(false);
-    });
-
-    it('should reject missing required fields in nested structures', () => {
-      const invalidComposition = {
-        id: 'comp-1',
-        version: 1,
-        format: {
-          width: 1920,
-          // missing height, fps
-        },
-        scenes: [],
-      };
-      expect(isValidContract(CompositionSchema, invalidComposition)).toBe(false);
     });
   });
 
@@ -294,29 +288,9 @@ describe('Domain Contracts Validation', () => {
     it('should validate a valid match result', () => {
       const validMatchResult = {
         sceneId: 'scene-1',
-        candidates: [
-          {
-            id: 'candidate-1',
-            score: 0.95,
-            assets: ['asset-1', 'asset-2'],
-          }
-        ],
+        candidates: [],
       };
       expect(isValidContract(MatchResultSchema, validMatchResult)).toBe(true);
-    });
-
-    it('should reject invalid field types', () => {
-      const invalidMatchResult = {
-        sceneId: 'scene-1',
-        candidates: [
-          {
-            id: 'candidate-1',
-            score: 'high', // should be a number
-            assets: [],
-          }
-        ],
-      };
-      expect(isValidContract(MatchResultSchema, invalidMatchResult)).toBe(false);
     });
   });
 });

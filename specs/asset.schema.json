@@ -3,13 +3,80 @@
   "$id": "combination/asset.schema.json",
   "title": "Asset",
   "type": "object",
-  "required": ["id", "type", "source", "license", "media", "visual"],
+  "additionalProperties": false,
+  "required": ["id", "type", "importedAt", "source", "license", "media", "visual"],
   "properties": {
     "id": {"type": "string", "minLength": 1},
     "type": {"enum": ["video", "image", "svg", "icon", "illustration", "audio", "component", "texture", "effect"]},
-    "source": {"type": "object", "required": ["name", "url"], "properties": {"name": {"type": "string"}, "url": {"type": "string", "format": "uri"}, "author": {"type": "string"}}},
-    "license": {"type": "object", "required": ["name", "url", "status"], "properties": {"name": {"type": "string"}, "url": {"type": "string", "format": "uri"}, "status": {"enum": ["approved", "review", "blocked"]}, "commercialUse": {"type": "boolean"}, "modificationAllowed": {"type": "boolean"}, "attributionRequired": {"type": "boolean"}}},
-    "media": {"type": "object", "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}, "durationMs": {"type": "integer", "minimum": 0}, "hasAlpha": {"type": "boolean"}, "sha256": {"type": "string"}}},
-    "visual": {"type": "object", "properties": {"subjects": {"type": "array", "items": {"type": "string"}}, "tags": {"type": "array", "items": {"type": "string"}}, "style": {"type": "string"}, "mood": {"type": "string"}, "energy": {"type": "number", "minimum": 0, "maximum": 1}, "complexity": {"type": "number", "minimum": 0, "maximum": 1}, "direction": {"enum": ["left", "right", "up", "down", "center", "none"]}, "focalArea": {"type": "string"}, "negativeSpace": {"type": "string"}, "textSafeArea": {"type": "string"}}}
+    "importedAt": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "url"],
+      "properties": {
+        "name": {"type": "string"},
+        "url": {"type": "string", "format": "uri"},
+        "author": {"type": "string"}
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "url", "status", "commercialUse", "modificationAllowed", "attributionRequired"],
+      "properties": {
+        "name": {"type": "string"},
+        "url": {"type": "string", "format": "uri"},
+        "status": {"enum": ["approved", "review", "blocked"]},
+        "commercialUse": {"type": "boolean"},
+        "modificationAllowed": {"type": "boolean"},
+        "attributionRequired": {"type": "boolean"}
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "durationMs": {"type": "integer", "minimum": 0},
+        "hasAlpha": {"type": "boolean"},
+        "aspectRatio": {"type": "number", "exclusiveMinimum": 0},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subjects": {"type": "array", "items": {"type": "string"}},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "style": {"type": "string"},
+        "mood": {"type": "string"},
+        "energy": {"type": "number", "minimum": 0, "maximum": 1},
+        "complexity": {"type": "number", "minimum": 0, "maximum": 1},
+        "direction": {"enum": ["left", "right", "up", "down", "center", "none"]},
+        "focalArea": {"type": "string"},
+        "negativeSpace": {"type": "string"},
+        "textSafeArea": {"type": "string"},
+        "colors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dominant": {"type": "array", "items": {"type": "string"}},
+            "secondary": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "motion": {"enum": ["static", "pan", "zoom", "loop", "erratic"]},
+        "suggestedFunctions": {
+          "type": "array",
+          "items": {"enum": ["hook", "explain", "demonstrate", "compare", "emphasize", "transition", "payoff", "cta"]}
+        },
+        "compatibility": {
+          "type": "object",
+          "additionalProperties": {"type": "boolean"}
+        }
+      }
+    }
   }
 }
