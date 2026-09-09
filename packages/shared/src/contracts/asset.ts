@@ -4,7 +4,7 @@ export const AssetSourceSchema = z.object({
   name: z.string(),
   url: z.string().url(),
   author: z.string().optional(),
-});
+}).strict();
 
 export const AssetLicenseSchema = z.object({
   name: z.string(),
@@ -13,7 +13,7 @@ export const AssetLicenseSchema = z.object({
   commercialUse: z.boolean().optional(),
   modificationAllowed: z.boolean().optional(),
   attributionRequired: z.boolean().optional(),
-});
+}).strict();
 
 export const AssetMediaSchema = z.object({
   width: z.number().int().min(1).optional(),
@@ -21,7 +21,7 @@ export const AssetMediaSchema = z.object({
   durationMs: z.number().int().min(0).optional(),
   hasAlpha: z.boolean().optional(),
   sha256: z.string().optional(),
-});
+}).strict();
 
 export const AssetVisualSchema = z.object({
   subjects: z.array(z.string()).optional(),
@@ -34,7 +34,7 @@ export const AssetVisualSchema = z.object({
   focalArea: z.string().optional(),
   negativeSpace: z.string().optional(),
   textSafeArea: z.string().optional(),
-});
+}).strict();
 
 export const AssetSchema = z.object({
   id: z.string().min(1),
@@ -43,7 +43,7 @@ export const AssetSchema = z.object({
   license: AssetLicenseSchema,
   media: AssetMediaSchema,
   visual: AssetVisualSchema,
-});
+}).strict();
 
 export type AssetSource = z.infer<typeof AssetSourceSchema>;
 export type AssetLicense = z.infer<typeof AssetLicenseSchema>;

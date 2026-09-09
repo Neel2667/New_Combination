@@ -10,6 +10,6 @@ export const VisualIntentSchema = z.object({
   keywords: z.array(z.string()).optional(),
   visualConstraints: z.array(z.string()).optional(),
   durationMs: z.number().int().min(1).optional(),
-});
+}).strict();
 
 export type VisualIntent = z.infer<typeof VisualIntentSchema>;
