@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combination/scene.schema.json",
+  "title": "Scene",
+  "type": "object",
+  "required": ["id", "startMs", "durationMs", "layers"],
+  "properties": {
+    "id": {"type": "string"},
+    "startMs": {"type": "integer", "minimum": 0},
+    "durationMs": {"type": "integer", "minimum": 1},
+    "layers": {"type": "array", "items": {"type": "object", "required": ["id", "role"], "properties": {"id": {"type": "string"}, "role": {"enum": ["background", "subject", "graphic", "text", "overlay", "effect"]}, "assetId": {"type": "string"}, "zIndex": {"type": "integer"}, "x": {"type": "number"}, "y": {"type": "number"}, "scale": {"type": "number", "exclusiveMinimum": 0}, "opacity": {"type": "number", "minimum": 0, "maximum": 1}}}}
+  }
+}

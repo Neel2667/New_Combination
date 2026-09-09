@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combination/asset.schema.json",
+  "title": "Asset",
+  "type": "object",
+  "required": ["id", "type", "source", "license", "media", "visual"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "type": {"enum": ["video", "image", "svg", "icon", "illustration", "audio", "component", "texture", "effect"]},
+    "source": {"type": "object", "required": ["name", "url"], "properties": {"name": {"type": "string"}, "url": {"type": "string", "format": "uri"}, "author": {"type": "string"}}},
+    "license": {"type": "object", "required": ["name", "url", "status"], "properties": {"name": {"type": "string"}, "url": {"type": "string", "format": "uri"}, "status": {"enum": ["approved", "review", "blocked"]}, "commercialUse": {"type": "boolean"}, "modificationAllowed": {"type": "boolean"}, "attributionRequired": {"type": "boolean"}}},
+    "media": {"type": "object", "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}, "durationMs": {"type": "integer", "minimum": 0}, "hasAlpha": {"type": "boolean"}, "sha256": {"type": "string"}}},
+    "visual": {"type": "object", "properties": {"subjects": {"type": "array", "items": {"type": "string"}}, "tags": {"type": "array", "items": {"type": "string"}}, "style": {"type": "string"}, "mood": {"type": "string"}, "energy": {"type": "number", "minimum": 0, "maximum": 1}, "complexity": {"type": "number", "minimum": 0, "maximum": 1}, "direction": {"enum": ["left", "right", "up", "down", "center", "none"]}, "focalArea": {"type": "string"}, "negativeSpace": {"type": "string"}, "textSafeArea": {"type": "string"}}}
+  }
+}

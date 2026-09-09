@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combination/visual-intent.schema.json",
+  "title": "Visual Intent",
+  "type": "object",
+  "required": ["sceneId", "concept", "function", "energy"],
+  "properties": {
+    "sceneId": {"type": "string"},
+    "concept": {"type": "string"},
+    "emotion": {"type": "string"},
+    "function": {"enum": ["hook", "explain", "demonstrate", "compare", "emphasize", "transition", "payoff", "cta"]},
+    "energy": {"type": "number", "minimum": 0, "maximum": 1},
+    "subjects": {"type": "array", "items": {"type": "string"}},
+    "keywords": {"type": "array", "items": {"type": "string"}},
+    "visualConstraints": {"type": "array", "items": {"type": "string"}},
+    "durationMs": {"type": "integer", "minimum": 1}
+  }
+}

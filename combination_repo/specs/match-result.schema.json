@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combination/match-result.schema.json",
+  "title": "Match Result",
+  "type": "object",
+  "required": ["sceneId", "candidates"],
+  "properties": {
+    "sceneId": {"type": "string"},
+    "candidates": {"type": "array", "items": {"type": "object", "required": ["id", "score", "assets"], "properties": {"id": {"type": "string"}, "score": {"type": "number"}, "assets": {"type": "array", "items": {"type": "string"}}, "reasons": {"type": "array", "items": {"type": "string"}}, "warnings": {"type": "array", "items": {"type": "string"}}}}}
+  }
+}

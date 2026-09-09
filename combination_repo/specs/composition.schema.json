@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "combination/composition.schema.json",
+  "title": "Composition",
+  "type": "object",
+  "required": ["id", "version", "format", "scenes"],
+  "properties": {
+    "id": {"type": "string"},
+    "version": {"type": "integer", "minimum": 1},
+    "format": {"type": "object", "required": ["width", "height", "fps"], "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}, "fps": {"type": "number", "exclusiveMinimum": 0}}},
+    "scenes": {"type": "array", "items": {"$ref": "scene.schema.json"}},
+    "audio": {"type": "array", "items": {"type": "object", "required": ["id", "type", "startMs"], "properties": {"id": {"type": "string"}, "type": {"enum": ["narration", "music", "sfx"]}, "assetId": {"type": "string"}, "startMs": {"type": "integer", "minimum": 0}, "durationMs": {"type": "integer", "minimum": 1}, "gain": {"type": "number"}}}}
+  }
+}
