@@ -15,6 +15,7 @@ describe('AssetService', () => {
       update: vi.fn(),
       delete: vi.fn(),
       list: vi.fn(),
+      listProductionEligible: vi.fn(),
     } as unknown as AssetRepository;
 
     service = new AssetService(repository);
@@ -84,6 +85,28 @@ describe('AssetService', () => {
     it('throws if asset not found', async () => {
       vi.mocked(repository.getById).mockResolvedValue(null);
       await expect(service.getAssetForProduction('non-existent')).rejects.toThrow(/not found/);
+    });
+  });
+
+  describe('listProductionEligible', () => {
+    it('filters out assets returned by the repository that do not pass domain validation', async () => {
+      const approvedAsset = { ...validAsset, id: '1' };
+      const nonCommAsset = { ...validAsset, id: '2', license: { ...validAsset.license, commercialUse: false } };
+      const reviewAsset = { ...validAsset, id: '3', license: { ...validAsset.license, status: 'review' as const } };
+      const blockedAsset = { ...validAsset, id: '4', license: { ...validAsset.license, status: 'blocked' as const } };
+
+      vi.mocked(repository.listProductionEligible).mockResolvedValue([
+        approvedAsset,
+        nonCommAsset,
+        reviewAsset,
+        blockedAsset
+      ]);
+
+      const eligible = await service.listProductionEligible();
+      
+      // Only the approved and commercial-use asset should pass domain validation
+      expect(eligible).toHaveLength(1);
+      expect(eligible[0].id).toBe('1');
     });
   });
 });

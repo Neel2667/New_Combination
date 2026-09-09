@@ -5,6 +5,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { AssetRepository } from './asset.repository';
 import * as schema from '../db/schema';
 import path from 'path';
+import { Asset } from '@combination/shared';
 
 let db: ReturnType<typeof drizzle>;
 let sqlite: Database.Database;
@@ -70,5 +71,51 @@ describe('AssetRepository', () => {
     await repository.delete('repo-asset-1');
     const retrieved = await repository.getById('repo-asset-1');
     expect(retrieved).toBeNull();
+  });
+
+  it('listProductionEligible filters correctly', async () => {
+    await repository.create({
+      id: 'prod-1',
+      type: 'video',
+      importedAt: '2023-10-01T12:00:00Z',
+      source: { name: 'A', url: 'https://a.com' },
+      license: { name: 'A', url: 'https://a.com', status: 'approved', commercialUse: true, modificationAllowed: true, attributionRequired: false },
+      media: { sha256: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+      visual: {},
+    } as Asset);
+
+    await repository.create({
+      id: 'review-1',
+      type: 'video',
+      importedAt: '2023-10-01T12:00:00Z',
+      source: { name: 'B', url: 'https://b.com' },
+      license: { name: 'B', url: 'https://b.com', status: 'review', commercialUse: true, modificationAllowed: true, attributionRequired: false },
+      media: { sha256: 'b1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+      visual: {},
+    } as Asset);
+
+    await repository.create({
+      id: 'blocked-1',
+      type: 'video',
+      importedAt: '2023-10-01T12:00:00Z',
+      source: { name: 'C', url: 'https://c.com' },
+      license: { name: 'C', url: 'https://c.com', status: 'blocked', commercialUse: true, modificationAllowed: true, attributionRequired: false },
+      media: { sha256: 'c1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+      visual: {},
+    } as Asset);
+
+    await repository.create({
+      id: 'noncomm-1',
+      type: 'video',
+      importedAt: '2023-10-01T12:00:00Z',
+      source: { name: 'D', url: 'https://d.com' },
+      license: { name: 'D', url: 'https://d.com', status: 'approved', commercialUse: false, modificationAllowed: true, attributionRequired: false },
+      media: { sha256: 'd1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd' },
+      visual: {},
+    } as Asset);
+
+    const eligible = await repository.listProductionEligible();
+    expect(eligible.length).toBe(1);
+    expect(eligible[0].id).toBe('prod-1');
   });
 });

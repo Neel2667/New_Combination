@@ -1,6 +1,6 @@
 import { db as defaultDb } from '../db';
 import { assets } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { Asset } from '@combination/shared';
 
 export class AssetRepository {
@@ -51,6 +51,16 @@ export class AssetRepository {
 
   async list(): Promise<Asset[]> {
     const rows = await this.dbInstance.select().from(assets).all();
+    return rows.map(row => this.mapRowToAsset(row));
+  }
+
+  async listProductionEligible(): Promise<Asset[]> {
+    const rows = await this.dbInstance.select().from(assets).where(
+      and(
+        eq(assets.licenseStatus, 'approved'),
+        eq(assets.commercialUse, true)
+      )
+    ).all();
     return rows.map(row => this.mapRowToAsset(row));
   }
 

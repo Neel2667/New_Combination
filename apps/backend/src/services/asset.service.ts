@@ -7,10 +7,6 @@ export class AssetService {
 
   async createAsset(data: unknown): Promise<Asset> {
     const asset = validateContract(AssetSchema, data);
-    
-    // Additional provenance domain rule checks could go here
-    // though the Zod schema already enforces required fields.
-
     await this.repository.create(asset);
     return asset;
   }
@@ -20,19 +16,37 @@ export class AssetService {
     if (!asset) {
       throw new Error(`Asset not found: ${id}`);
     }
-
-    if (asset.license.status === 'review') {
-      throw new Error(`Asset ${id} cannot enter production: license is in review.`);
-    }
-
-    if (asset.license.status === 'blocked') {
-      throw new Error(`Asset ${id} cannot enter production: license is blocked.`);
-    }
-
-    if (!asset.license.commercialUse) {
-      throw new Error(`Asset ${id} cannot enter production: commercial use is not allowed.`);
-    }
-
+    
+    this.assertProductionEligibility(asset);
     return asset;
+  }
+
+  async listProductionEligible(): Promise<Asset[]> {
+    const candidates = await this.repository.listProductionEligible();
+    // The service remains the authority for final domain validation.
+    // It filters the candidates to ensure they pass domain rules.
+    return candidates.filter(asset => {
+      try {
+        this.assertProductionEligibility(asset);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  private assertProductionEligibility(asset: Asset): void {
+    if (asset.license.status === 'review') {
+      throw new Error(`Asset ${asset.id} cannot enter production: license is in review.`);
+    }
+    if (asset.license.status === 'blocked') {
+      throw new Error(`Asset ${asset.id} cannot enter production: license is blocked.`);
+    }
+    if (!asset.license.commercialUse) {
+      throw new Error(`Asset ${asset.id} cannot enter production: commercial use is not allowed.`);
+    }
+    if (asset.license.status !== 'approved') {
+      throw new Error(`Asset ${asset.id} cannot enter production: license status must be approved.`);
+    }
   }
 }
