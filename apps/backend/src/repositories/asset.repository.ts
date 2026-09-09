@@ -45,6 +45,13 @@ export class AssetRepository {
     }).where(eq(assets.id, id));
   }
 
+  
+  async findBySha256(sha256: string): Promise<Asset | null> {
+    const row = await this.dbInstance.select().from(assets).where(eq(assets.sha256, sha256)).get();
+    if (!row) return null;
+    return this.mapRowToAsset(row);
+  }
+
   async delete(id: string): Promise<void> {
     await this.dbInstance.delete(assets).where(eq(assets.id, id));
   }

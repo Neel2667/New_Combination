@@ -67,6 +67,15 @@ describe('AssetRepository', () => {
     expect(list[0].id).toBe('repo-asset-1');
   });
 
+  
+  it('findBySha256 works', async () => {
+    const retrieved = await repository.findBySha256('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd');
+    expect(retrieved).not.toBeNull();
+    
+    const notFound = await repository.findBySha256('b1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6abcd');
+    expect(notFound).toBeNull();
+  });
+
   it('can delete an asset', async () => {
     await repository.delete('repo-asset-1');
     const retrieved = await repository.getById('repo-asset-1');
