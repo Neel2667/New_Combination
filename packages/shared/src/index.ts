@@ -7,3 +7,5 @@ export interface HealthResponse {
   version: string;
   timestamp: string;
 }
+
+export * from './contracts/index';
