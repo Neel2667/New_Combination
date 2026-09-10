@@ -1,30 +1,21 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Asset } from "@combination/shared";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Asset } from '@combination/shared';
 import { AssetIngestionService } from './asset-ingestion.service';
 import { AssetService } from './asset.service';
 import { AssetRepository } from '../repositories/asset.repository';
-import * as fs from 'fs';
-import * as path from 'path';
+import { HashCalculator } from './hash-calculator';
 
-describe('AssetIngestionService', () => {
+vi.mock('./file-inspector');
+vi.mock('./hash-calculator');
+
+describe('AssetIngestionService (Unit)', () => {
   let repository: AssetRepository;
   let assetService: AssetService;
   let ingestionService: AssetIngestionService;
 
-  const testDir = path.join(__dirname, 'test-assets-ingestion');
-  const pngFile = path.join(testDir, 'test.png');
-
   beforeEach(() => {
-    if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
-    fs.writeFileSync(pngFile, 'fake png content'); // not a real PNG, but HashCalculator will still work. FileInspector will fail if it's not a real png.
-    // wait, FileInspector actually runs `file` and `ffprobe`. We should mock FileInspector.
-  });
+    vi.clearAllMocks();
 
-  afterEach(() => {
-    fs.rmSync(testDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
     repository = {
       findBySha256: vi.fn(),
     } as unknown as AssetRepository;
@@ -37,14 +28,13 @@ describe('AssetIngestionService', () => {
   });
 
   it('rejects if duplicate sha256 is found', async () => {
+    vi.mocked(HashCalculator.calculateSha256).mockResolvedValue('fakehash');
     vi.mocked(repository.findBySha256).mockResolvedValue({ id: 'existing-id' } as Asset);
     
     await expect(ingestionService.ingest({
-      filePath: pngFile,
+      filePath: 'fake.png',
       source: { name: 'A', url: 'https://a.com' },
       license: { name: 'A', url: 'https://a.com', status: 'approved', commercialUse: true, modificationAllowed: true, attributionRequired: false },
     })).rejects.toThrow(/Duplicate asset/);
   });
-  
-  // We can write an integration test that uses actual files and real FileInspector
 });
