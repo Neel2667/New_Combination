@@ -7,15 +7,13 @@ TASK-004-asset-storage-abstraction (Asset Management Integration)
 Success
 
 ## Details
-- Restored `tasks/TASK-004-asset-storage-abstraction.md` specification.
-- Fixed `AssetController` to prevent temporary file leakage from `multer`.
-- Fixed `AssetController.delete` to enforce correct deletion order (physical before metadata).
-- Implemented `mimeType` extraction in `FileInspector` and stored it in the DB `media` JSON blob via `AssetIngestionService`.
-- Replaced backend hardcoded MIME mappings with the stored `mimeType`.
-- Updated `UploadModal.tsx` constraints to work nicely with `AssetLicenseSchema` (fixed URL validation using `.or(z.literal(''))`).
-- Verified all unit and integration tests successfully (`NODE_ENV=test npm run test`).
-- Ran successful typechecks and linting (`npm run typecheck && npm run lint`).
-- Frontend builds cleanly (`npm run build`).
+- Fixed `AssetController` to safely parse multipart JSON metadata, returning 400 for malformed JSON.
+- Re-verified temporary file deletion in `AssetController.upload` after testing various success and failure conditions.
+- Fixed `AssetController.delete` to strictly enforce DB deletion before attempting physical storage deletion, allowing physical deletion failures to remain isolated.
+- Verified Asset list count logic; preserved the array `.length` contract as currently defined in the repository implementation.
+- Expanded ingestion integration tests to verify database and storage failure compensation (no DB record if storage fails, no physical asset if DB fails).
+- Verified `LocalFilesystemStorage` safety constraints (uuid keys, traversal prevention).
+- All checks (unit, integration, lint, typecheck, build) are passing cleanly.
 
 ## Known Limitations
 None observed for the current specification scope.

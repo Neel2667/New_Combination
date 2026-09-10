@@ -25,9 +25,17 @@ export class AssetController {
         return;
       }
 
-      const source = JSON.parse(parsedBody.data.source);
-      const license = JSON.parse(parsedBody.data.license);
-      const visual = parsedBody.data.visual ? JSON.parse(parsedBody.data.visual) : undefined;
+      
+      let source, license, visual;
+      try {
+        source = JSON.parse(parsedBody.data.source);
+        license = JSON.parse(parsedBody.data.license);
+        visual = parsedBody.data.visual ? JSON.parse(parsedBody.data.visual) : undefined;
+      } catch (err) {
+        res.status(400).json({ error: 'Malformed JSON payload', details: (err as Error).message });
+        return;
+      }
+
 
       const asset = await this.assetIngestionService.ingest({
         filePath: req.file.path,
@@ -117,11 +125,17 @@ export class AssetController {
         return;
       }
 
-      // 1. Delete physical storage first.
-      await this.assetStorage.delete(asset.id);
       
-      // 2. Delete database record next.
+      // 1. Delete database record FIRST.
       await this.assetService.deleteAsset(asset.id);
+      
+      // 2. Attempt physical storage deletion SECOND.
+      try {
+        await this.assetStorage.delete(asset.id);
+      } catch (storageError) {
+        console.error(`Failed to delete physical asset ${asset.id}: ${(storageError as Error).message}`);
+      }
+
 
       res.status(204).send();
     } catch (error) {
