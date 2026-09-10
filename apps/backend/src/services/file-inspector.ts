@@ -13,6 +13,7 @@ export interface InspectionResult {
   durationMs?: number;
   hasAlpha?: boolean;
   aspectRatio?: number;
+  mimeType?: string;
 }
 
 export class FileInspector {
@@ -35,6 +36,7 @@ export class FileInspector {
 
     return {
       type,
+      mimeType,
       ...metadata,
     };
   }

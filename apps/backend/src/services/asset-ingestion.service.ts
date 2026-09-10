@@ -43,6 +43,7 @@ export class AssetIngestionService {
       durationMs: inspection.durationMs,
       hasAlpha: inspection.hasAlpha,
       aspectRatio: inspection.aspectRatio,
+      mimeType: inspection.mimeType,
     };
 
     const assetId = crypto.randomUUID();

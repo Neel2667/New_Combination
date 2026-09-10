@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import * as fs from 'fs';
 import { AssetIngestionService } from '../services/asset-ingestion.service';
 import { AssetService } from '../services/asset.service';
 import { AssetStorage } from '../storage/asset-storage.interface';
@@ -43,13 +44,17 @@ export class AssetController {
       } else {
         res.status(500).json({ error: e.message });
       }
+    } finally {
+      if (req.file?.path) {
+        await fs.promises.unlink(req.file.path).catch(() => {});
+      }
     }
   };
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 20));
       
       const items = await this.assetService.listAssets({ limit, offset: (page - 1) * limit });
       res.status(200).json({ items, total: items.length });
@@ -82,9 +87,15 @@ export class AssetController {
       const stream = await this.assetStorage.getStream(asset.id);
       
       let contentType = 'application/octet-stream';
-      if (asset.type === 'image') contentType = 'image/png';
-      else if (asset.type === 'video') contentType = 'video/mp4';
-      else if (asset.type === 'audio') contentType = 'audio/mpeg';
+      if (asset.media.mimeType) {
+        contentType = asset.media.mimeType;
+      } else if (asset.type === 'image') {
+        contentType = 'image/png';
+      } else if (asset.type === 'video') {
+        contentType = 'video/mp4';
+      } else if (asset.type === 'audio') {
+        contentType = 'audio/mpeg';
+      }
 
       res.setHeader('Content-Type', contentType);
       stream.pipe(res);
@@ -106,8 +117,11 @@ export class AssetController {
         return;
       }
 
-      await this.assetService.deleteAsset(asset.id);
+      // 1. Delete physical storage first.
       await this.assetStorage.delete(asset.id);
+      
+      // 2. Delete database record next.
+      await this.assetService.deleteAsset(asset.id);
 
       res.status(204).send();
     } catch (error) {

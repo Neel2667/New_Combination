@@ -2,13 +2,13 @@ import { z } from 'zod';
 
 export const AssetSourceSchema = z.object({
   name: z.string(),
-  url: z.string().url(),
+  url: z.string().url().or(z.literal('')),
   author: z.string().optional(),
 }).strict();
 
 export const AssetLicenseSchema = z.object({
   name: z.string(),
-  url: z.string().url(),
+  url: z.string().url().or(z.literal('')),
   status: z.enum(['approved', 'review', 'blocked']),
   commercialUse: z.boolean(),
   modificationAllowed: z.boolean(),
@@ -22,6 +22,7 @@ export const AssetMediaSchema = z.object({
   hasAlpha: z.boolean().optional(),
   aspectRatio: z.number().positive().optional(),
   sha256: z.string().regex(/^[a-fA-F0-9]{64}$/, "Must be a valid SHA-256 hash"),
+  mimeType: z.string().optional(),
 }).strict();
 
 export const AssetVisualSchema = z.object({
