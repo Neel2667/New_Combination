@@ -3,6 +3,7 @@ import { AssetService } from './asset.service';
 import { AssetRepository } from '../repositories/asset.repository';
 import { FileInspector } from './file-inspector';
 import { HashCalculator } from './hash-calculator';
+import { AssetStorage } from '../storage/asset-storage.interface';
 import * as crypto from 'crypto';
 
 export interface IngestionPayload {
@@ -15,7 +16,8 @@ export interface IngestionPayload {
 export class AssetIngestionService {
   constructor(
     private readonly assetService: AssetService,
-    private readonly assetRepository: AssetRepository
+    private readonly assetRepository: AssetRepository,
+    private readonly assetStorage: AssetStorage
   ) {}
 
   async ingest(payload: IngestionPayload): Promise<Asset> {
@@ -43,8 +45,9 @@ export class AssetIngestionService {
       aspectRatio: inspection.aspectRatio,
     };
 
-    const asset: Partial<Asset> = {
-      id: crypto.randomUUID(),
+    const assetId = crypto.randomUUID();
+    const assetData: Partial<Asset> = {
+      id: assetId,
       type: inspection.type,
       importedAt: new Date().toISOString(),
       source,
@@ -53,9 +56,17 @@ export class AssetIngestionService {
       visual,
     };
 
-    // 5. Validation and Persistence
-    const createdAsset = await this.assetService.createAsset(asset);
+    // 5. Store Physical Bytes
+    await this.assetStorage.store(assetId, filePath);
 
-    return createdAsset;
+    // 6. Persistence & Rollback handling
+    try {
+      const createdAsset = await this.assetService.createAsset(assetData);
+      return createdAsset;
+    } catch (error) {
+      // Rollback physical storage to prevent orphaned files
+      await this.assetStorage.delete(assetId).catch(() => {});
+      throw error;
+    }
   }
 }

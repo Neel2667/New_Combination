@@ -11,6 +11,24 @@ export class AssetService {
     return asset;
   }
 
+  async getAssetById(id: string): Promise<Asset | null> {
+    return this.repository.getById(id);
+  }
+
+  async listAssets(opts?: { limit: number; offset: number }): Promise<Asset[]> {
+    // Currently the repository doesn't support limit/offset natively in list().
+    // We can add it or just return all. Let's just use the current repository implementation and slice.
+    const all = await this.repository.list();
+    if (opts) {
+      return all.slice(opts.offset, opts.offset + opts.limit);
+    }
+    return all;
+  }
+
+  async deleteAsset(id: string): Promise<void> {
+    await this.repository.delete(id);
+  }
+
   async getAssetForProduction(id: string): Promise<Asset> {
     const asset = await this.repository.getById(id);
     if (!asset) {
@@ -23,8 +41,6 @@ export class AssetService {
 
   async listProductionEligible(): Promise<Asset[]> {
     const candidates = await this.repository.listProductionEligible();
-    // The service remains the authority for final domain validation.
-    // It filters the candidates to ensure they pass domain rules.
     return candidates.filter(asset => {
       try {
         this.assertProductionEligibility(asset);
